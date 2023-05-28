@@ -1,6 +1,7 @@
 import wave
 import struct
 import numpy as np
+from common import *
 
 # Open the compressed audio file
 compressed_file = "compressed_audio.txt"
@@ -18,18 +19,10 @@ num_frames = len(compressed_samples)
 frames = bytearray()
 
 previous_sample = 0
-max_diff = 2**14
-ref_log = np.log1p(max_diff)
 
-frames.extend(struct.pack('<h', compressed_samples[0]))  # First sample is stored as is
-
-for quantized_value in compressed_samples[1:]:
-    restored_diff = (quantized_value / 16.0) * 2 - 1.0
-    diff = np.sign(restored_diff) * ref_log * np.expm1(abs(restored_diff))
-    sample = previous_sample + round(diff)
-    sample = max(min(sample, 32767), -32768)  # Clamp the value
-    frames.extend(struct.pack('<h', sample))
-    previous_sample = sample
+for quantized_value in compressed_samples:
+    previous_sample = get_restored_value(previous_sample, quantized_value)
+    frames.extend(struct.pack('<h', previous_sample))
 
 # Write the decompressed audio to a WAV file
 with wave.open(decompressed_file, 'wb') as wav_file:

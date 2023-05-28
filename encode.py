@@ -1,6 +1,8 @@
 import wave
 import struct
 import numpy as np
+import pickle
+from common import *
 
 # Open the WAV file
 input_file = "input_audio.wav"
@@ -12,6 +14,10 @@ with wave.open(input_file, 'rb') as wav_file:
     sample_rate = wav_file.getframerate()
     num_channels = wav_file.getnchannels()
     num_frames = wav_file.getnframes()
+
+    assert sample_width == 2
+    assert num_channels == 1
+    assert sample_rate == 44100
 
     # Read audio data
     frames = wav_file.readframes(num_frames)
@@ -26,19 +32,11 @@ for i in range(0, len(frames), sample_width):
 # Perform compression
 compressed_samples = []
 previous_sample = 0
-max_diff = 2**14
-ref_log = np.log1p(max_diff)
 
-for sample in samples[1:]:
-    diff = sample - previous_sample
-    if abs(diff) > max_diff:
-    	diff = max_diff * np.sign(diff)
-    quantized_diff = np.sign(diff) * (np.log1p(abs(diff)) / ref_log)
-    quantized_value = round(16 * ((quantized_diff + 1.0) / 2.0))
+for sample in samples:
+    quantized_value = get_quantized_value(sample, previous_sample)
     compressed_samples.append(quantized_value)
-    restored_diff = (quantized_value / 16) * 2 - 1.0
-    restored_diff = np.exp(previous_sample) - 1.0
-    previous_sample += restored_diff
+    previous_sample = get_restored_value(previous_sample, quantized_value)
 
 # Write compressed samples to a text file
 with open(output_file, 'w') as txt_file:
