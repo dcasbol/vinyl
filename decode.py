@@ -4,18 +4,16 @@ import numpy as np
 from common import *
 
 # Open the compressed audio file
-compressed_file = "compressed_audio.txt"
+compressed_file = "compressed_audio.npz"
 decompressed_file = "decompressed_audio.wav"
 
-with open(compressed_file, 'r') as txt_file:
-    # Read the compressed samples
-    compressed_samples = [int(line.strip()) for line in txt_file]
+compressed_samples = np.load(compressed_file)["a"]
+compressed_samples = HalfBytes(compressed_samples)
 
 # Decompress and reconstruct the audio
 sample_width = 2  # 16 bits
 sample_rate = 44100  # Specify the sample rate of the original audio
 num_channels = 1  # Specify the number of channels of the original audio
-num_frames = len(compressed_samples)
 frames = bytearray()
 
 previous_sample = 0

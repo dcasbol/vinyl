@@ -1,12 +1,11 @@
 import wave
 import struct
 import numpy as np
-import pickle
 from common import *
 
 # Open the WAV file
 input_file = "input_audio.wav"
-output_file = "compressed_audio.txt"
+output_file = "compressed_audio.npz"
 
 with wave.open(input_file, 'rb') as wav_file:
     # Get audio parameters
@@ -30,7 +29,7 @@ for i in range(0, len(frames), sample_width):
     samples.append(value)
 
 # Perform compression
-compressed_samples = []
+compressed_samples = HalfBytes()
 previous_sample = 0
 
 for sample in samples:
@@ -39,9 +38,8 @@ for sample in samples:
     previous_sample = get_restored_value(previous_sample, quantized_value)
 
 # Write compressed samples to a text file
-with open(output_file, 'w') as txt_file:
-    for sample in compressed_samples:
-        txt_file.write(str(sample) + '\n')
+compressed_samples = np.array(compressed_samples.values, dtype=np.uint8)
+np.savez_compressed(output_file, a=compressed_samples)
 
 print("Compression completed. Compressed samples saved to", output_file)
 
